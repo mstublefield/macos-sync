@@ -1,0 +1,29 @@
+# Excluded from ~/Development/ sync
+# These are auto-generated and can be rebuilt on the MacBook
+
+# User-excluded projects
+share-note-server/
+
+# JavaScript/Node
+node_modules/
+
+# Next.js build output
+.next/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Turborepo cache
+.turbo/
+
+# macOS metadata
+.DS_Store
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# SQLite sync temp files
+*.sync-backup
