@@ -197,6 +197,12 @@ OBSIDIAN_DISABLED
 #    Uses --update (only copy newer) and NO --delete (never remove Studio skills)
 sync_path "$HOME/.claude/skills/" "$HOME/.claude/skills/"
 
+# 3b. Claude Code session transcripts (~/.claude/projects/)
+#     Lets you resume a MacBook session on the Studio. --update (only newer) and
+#     NO --delete — never removes a session that exists only on the Studio.
+sync_path "$HOME/.claude/projects/" "$HOME/.claude/projects/" \
+    --exclude="*/sessions/"
+
 # 4. Claude-mem MCP plugin data — REMOVED
 #    Syncing claude-mem between machines kept corrupting the database and
 #    breaking Claude Code on the MacBook. Each machine now keeps its own copy.

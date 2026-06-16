@@ -101,6 +101,24 @@ else
     log "  REVERSE FAIL: Could not push MacBook Development files (exit code $?) — continuing with pull"
 fi
 
+# Claude Code session transcripts: push newer MacBook sessions to the Studio BEFORE
+# the destructive pull. Combined with projects/ being excluded from --delete, this
+# guarantees a session started on either machine can never be deleted by a sync.
+REV_OUT=""
+if REV_OUT=$(/usr/bin/rsync "${REVERSE_OPTS[@]}" \
+    --exclude="*/sessions/" \
+    "$HOME/.claude/projects/" "${STUDIO_HOST}:.claude/projects/"); then
+    n=$(count_changes "$REV_OUT")
+    if [ "$n" -gt 0 ]; then
+        log "  REVERSE OK: Pushed $n newer MacBook Claude session item(s) to Studio"
+        CHANGES=$((CHANGES + n))
+    else
+        log "  REVERSE OK: Studio already has latest Claude sessions"
+    fi
+else
+    log "  REVERSE FAIL: Could not push MacBook Claude sessions (exit code $?) — continuing with pull"
+fi
+
 # ── Obsidian Uploads (disabled by default in public build) ─────────────
 # This block helps sync content from an Obsidian vault that is too large
 # for the paid Obsidian Sync service, or could be expanded to sync an
@@ -320,7 +338,28 @@ sync_path "$HOME/.claude/" "$HOME/.claude/" \
     --exclude="file-history/" \
     --exclude="session-env/" \
     --exclude="cache/" \
-    --exclude="projects/*/sessions/"
+    --exclude="projects/"
+
+# 1b. Claude Code session transcripts (~/.claude/projects/) — NON-DESTRUCTIVE.
+#     Excluded from the --delete sync above so a session that exists on only one
+#     machine is never deleted (this is how the "saved-jobs" session was lost).
+#     --update copies only newer transcripts; the matching reverse push happens in
+#     Phase 0 so MacBook-only sessions reach the Studio before anything else runs.
+PROJ_OUT=""
+if PROJ_OUT=$(/usr/bin/rsync "${REVERSE_OPTS[@]}" \
+    --exclude="*/sessions/" \
+    "${STUDIO_HOST}:.claude/projects/" "$HOME/.claude/projects/"); then
+    n=$(count_changes "$PROJ_OUT")
+    if [ "$n" -gt 0 ]; then
+        log "  OK: ~/.claude/projects/ ($n session item(s) updated from Studio)"
+        CHANGES=$((CHANGES + n))
+    else
+        log "  OK: ~/.claude/projects/ (no changes)"
+    fi
+else
+    log "  FAIL: ~/.claude/projects/ pull (exit code $?)"
+    SYNC_ERRORS=$((SYNC_ERRORS + 1))
+fi
 
 # 2. Claude-mem MCP plugin data — REMOVED
 #    Syncing claude-mem between machines kept corrupting the database and
